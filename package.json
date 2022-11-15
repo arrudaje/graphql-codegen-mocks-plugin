@@ -1,0 +1,10 @@
+{
+  "name": "graphql-codegen-mocks-plugin",
+  "version": "0.0.1",
+  "description": "Generates mocks based on real data from GraphQL",
+  "main": "dist/index.js",
+  "repository": "https://github.com/arrudaje/graphql-codegen-mocks-plugin.git",
+  "author": "arrudaje <arrudaje@gmail.com>",
+  "license": "MIT",
+  "private": false
+}
