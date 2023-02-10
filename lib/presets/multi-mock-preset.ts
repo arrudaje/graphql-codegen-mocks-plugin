@@ -10,6 +10,7 @@ import yaml from "js-yaml";
 import dashify from "dashify";
 import { filterQueriesByName } from "../util/filter-queries-by-name";
 import { DefinitionNode } from "graphql";
+import { expandFragments } from "../util/expand-fragments";
 
 const preset: Types.OutputPreset<MockPresetConfig> = {
   async buildGeneratesSection(
@@ -36,21 +37,24 @@ const preset: Types.OutputPreset<MockPresetConfig> = {
     if (splitByTestCase) {
       Object.keys(configsObj).forEach((testCase) => {
         const filteredDocuments = documents
-          .map<Types.DocumentFile>((documentFile) => ({
-            ...documentFile,
-            document: {
-              ...documentFile.document,
-              kind: "Document",
-              definitions: Object.keys(configsObj[testCase]).reduce(
-                (acc: Array<DefinitionNode>, queryName) =>
-                  acc.concat(
-                    filterQueriesByName(documentFile.document, queryName)
-                      ?.definitions ?? []
-                  ),
-                []
-              ),
-            },
-          }))
+          .map<Types.DocumentFile>((documentFile) => {
+            const expandedDocument = expandFragments(documentFile.document);
+            return {
+              ...documentFile,
+              document: {
+                ...documentFile.document,
+                kind: "Document",
+                definitions: Object.keys(configsObj[testCase]).reduce(
+                  (acc: Array<DefinitionNode>, queryName) =>
+                    acc.concat(
+                      filterQueriesByName(expandedDocument, queryName)
+                        ?.definitions ?? []
+                    ),
+                  []
+                ),
+              },
+            };
+          })
           .filter((documentFile) => documentFile.document?.definitions.length);
         generates.push({
           ...options,
@@ -68,10 +72,13 @@ const preset: Types.OutputPreset<MockPresetConfig> = {
       });
       queryNames.forEach((name) => {
         const filteredDocuments = documents
-          .map((documentFile) => ({
-            ...documentFile,
-            document: filterQueriesByName(documentFile.document, name),
-          }))
+          .map((documentFile) => {
+            const expandedDocument = expandFragments(documentFile.document);
+            return {
+              ...documentFile,
+              document: filterQueriesByName(expandedDocument, name),
+            };
+          })
           .filter((documentFile) => documentFile.document?.definitions.length);
         generates.push({
           ...options,
