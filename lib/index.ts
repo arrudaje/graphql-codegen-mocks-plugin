@@ -5,7 +5,6 @@ import path from 'path';
 
 const config: CodegenPlugin = {
     async plugin(schema, documents, config, info) {
-    
         if (info?.outputFile) {
             const filePath = path.join(process.cwd(), info.outputFile);
             let fileExists = true;

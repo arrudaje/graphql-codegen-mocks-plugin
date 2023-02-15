@@ -31,7 +31,7 @@ const preset: Types.OutputPreset<MockPresetConfig> = {
         await fs.readFile(config.testCases, { encoding: "utf-8" })
       ) as MockTestCasesConfig;
     } catch (err) {
-      throw new Error("Failure while loading test cases.", { cause: err });
+      throw new Error("Failure while loading test cases.");
     }
 
     if (splitByTestCase) {

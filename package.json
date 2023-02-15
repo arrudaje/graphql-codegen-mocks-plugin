@@ -4,15 +4,24 @@
   "description": "Generates mocks based on real data from GraphQL",
   "files": ["dist"],
   "exports": {
-    ".": "./dist/index.js",
-    "./preset": "./dist/presets/multi-mock-preset.js"
+    ".": {
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js"
+    },
+    "./preset": {
+      "import": "./dist/esm/presets/multi-mock-preset.js",
+      "require": "./dist/cjs/presets/multi-mock-preset.js"
+    }
   },
+  "types": "types.d.ts",
   "repository": "https://github.com/arrudaje/graphql-codegen-mocks-plugin.git",
   "author": "arrudaje <arrudaje@gmail.com>",
   "license": "MIT",
   "private": false,
   "scripts": {
-    "build": "tsc --watch"
+    "build": "npm run build:esm && npm run build:cjs",
+    "build:esm": "tsc --module esnext --target esnext --outDir dist/esm",
+    "build:cjs": "tsc --module commonjs --target es5 --outDir dist/cjs"
   },
   "dependencies": {
     "dashify": "^2.0.0",
