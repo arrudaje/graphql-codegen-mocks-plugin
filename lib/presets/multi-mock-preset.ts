@@ -8,9 +8,9 @@ import path from "path";
 import fs from "fs/promises";
 import yaml from "js-yaml";
 import dashify from "dashify";
-import { filterQueriesByName } from "../util/filter-queries-by-name";
-import { DefinitionNode } from "graphql";
-import { expandFragments } from "../util/expand-fragments";
+import { filterQueriesByName } from '@/util/filter-queries-by-name';
+import { DefinitionNode, DocumentNode } from 'graphql';
+import { expandFragments } from '@/util/expand-fragments';
 
 const preset: Types.OutputPreset<MockPresetConfig> = {
   async buildGeneratesSection(
@@ -22,6 +22,17 @@ const preset: Types.OutputPreset<MockPresetConfig> = {
       documents,
       config,
     } = options;
+    const partialGenerates: Partial<Types.GenerateOptions> = {
+      plugins: options.plugins,
+      schema: options.schema,
+      schemaAst: options.schemaAst,
+      config: options.config,
+      pluginMap: options.pluginMap,
+      pluginContext: options.pluginContext,
+      profiler: options.profiler,
+      cache: options.cache,
+      documentTransforms: options.documentTransforms
+    };
 
     if (!config?.testCases) throw new Error("No test cases specified.");
 
@@ -37,11 +48,11 @@ const preset: Types.OutputPreset<MockPresetConfig> = {
     if (splitByTestCase) {
       Object.keys(configsObj).forEach((testCase) => {
         const filteredDocuments = documents
-          .map<Types.DocumentFile>((documentFile) => {
+          .map((documentFile) => {
             const expandedDocument = expandFragments(documentFile.document);
-            return {
+            return <Types.DocumentFile>{
               ...documentFile,
-              document: {
+              document: <DocumentNode>{
                 ...documentFile.document,
                 kind: "Document",
                 definitions: Object.keys(configsObj[testCase]).reduce(
@@ -56,8 +67,8 @@ const preset: Types.OutputPreset<MockPresetConfig> = {
             };
           })
           .filter((documentFile) => documentFile.document?.definitions.length);
-        generates.push({
-          ...options,
+        generates.push(<Types.GenerateOptions>{
+          ...partialGenerates,
           documents: filteredDocuments,
           filename: path.join(
             options.baseOutputDir,
@@ -80,8 +91,8 @@ const preset: Types.OutputPreset<MockPresetConfig> = {
             };
           })
           .filter((documentFile) => documentFile.document?.definitions.length);
-        generates.push({
-          ...options,
+        generates.push(<Types.GenerateOptions>{
+          ...partialGenerates,
           documents: filteredDocuments,
           filename: path.join(options.baseOutputDir, `${dashify(name)}.json`),
         });

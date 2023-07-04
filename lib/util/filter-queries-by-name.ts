@@ -1,9 +1,6 @@
-import { ASTNode, DocumentNode, FragmentDefinitionNode, FragmentSpreadNode, OperationDefinitionNode } from "graphql";
+import { DocumentNode, FragmentDefinitionNode, FragmentSpreadNode, OperationDefinitionNode } from "graphql";
 import { visit } from "graphql";
-
-function deleteNode() {
-  return null;
-}
+import { deleteNode, ignoreDefinitions } from './util';
 
 export function filterQueriesByName(
   document?: DocumentNode,
@@ -13,6 +10,8 @@ export function filterQueriesByName(
 
   const fragmentsToInclude: Array<string> = [];
   const filteredQueries = visit(document, {
+    // ignore the rest of the definitions as they do not define queries
+    ...ignoreDefinitions,
     OperationDefinition: {
       enter(
         operationNode: OperationDefinitionNode,
@@ -38,47 +37,22 @@ export function filterQueriesByName(
         return null;
       },
     },
-    FragmentSpread(node: FragmentSpreadNode){
+    FragmentSpread(node: FragmentSpreadNode) {
         fragmentsToInclude.push(node.name.value);
     },
-    // ignore the rest of the definitions as they do not define queries
-    FragmentDefinition: deleteNode,
-    SchemaDefinition: deleteNode,
-    OperationTypeDefinition: deleteNode,
-    ScalarTypeDefinition: deleteNode,
-    ObjectTypeDefinition: deleteNode,
-    FieldDefinition: deleteNode,
-    InputValueDefinition: deleteNode,
-    InterfaceTypeDefinition: deleteNode,
-    UnionTypeDefinition: deleteNode,
-    EnumTypeDefinition: deleteNode,
-    EnumValueDefinition: deleteNode,
-    InputObjectTypeDefinition: deleteNode,
-    DirectiveDefinition: deleteNode,
   });
 
   // include only the fragments that were requested by the specified query, if any
   const filteredFragments = visit(document, {
+    // ignore the rest of the definitions as they do not define fragments
+    ...ignoreDefinitions,
     FragmentDefinition(node: FragmentDefinitionNode) {
         if (!fragmentsToInclude.includes(node.name.value)) return null;
     },
-    // ignore the rest of the definitions as they do not define fragments
-    OperationDefinition: deleteNode,
-    SchemaDefinition: deleteNode,
-    OperationTypeDefinition: deleteNode,
-    ScalarTypeDefinition: deleteNode,
-    ObjectTypeDefinition: deleteNode,
-    FieldDefinition: deleteNode,
-    InputValueDefinition: deleteNode,
-    InterfaceTypeDefinition: deleteNode,
-    UnionTypeDefinition: deleteNode,
-    EnumTypeDefinition: deleteNode,
-    EnumValueDefinition: deleteNode,
-    InputObjectTypeDefinition: deleteNode,
-    DirectiveDefinition: deleteNode,
   });
 
-  filteredQueries.definitions.push(...(filteredFragments.definitions || []));
-
-  return filteredQueries;
+  return {
+    ...filteredQueries,
+    definitions: [...filteredQueries.definitions, ...(filteredFragments.definitions || [])],
+  };
 }
